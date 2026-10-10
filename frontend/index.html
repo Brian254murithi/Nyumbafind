@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="NyumbaFind — Discover rental homes across Kenya. Compare prices, explore tenant ratings and make informed rental decisions." />
+  <title>NyumbaFind — Find a Home That Feels Right</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <!-- Map (Leaflet + OpenStreetMap — self-hosted, no API key required) -->
+  <link rel="stylesheet" href="/static/vendor/leaflet/leaflet.css" />
+  <link rel="stylesheet" href="/static/vendor/leaflet.markercluster/MarkerCluster.css" />
+  <link rel="stylesheet" href="/static/vendor/leaflet.markercluster/MarkerCluster.Default.css" />
+  <link rel="stylesheet" href="/static/style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='6' fill='%230F2B5B'/><path d='M6 12l6-5 6 5v6h-4v-4h-4v4H6z' fill='%23E63946'/></svg>" />
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+
+  <!-- ============ NAVIGATION ============ -->
+  <header class="site-header" id="siteHeader">
+    <nav class="nav container" aria-label="Main navigation">
+      <a href="/" class="brand" aria-label="NyumbaFind home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 11.5 12 4l9 7.5v7a2 2 0 0 1-2 2h-4v-6h-6v6H5a2 2 0 0 1-2-2z"/></svg>
+        </span>
+        <span class="brand-text">Nyumba<em>Find</em></span>
+      </a>
+
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#featured" class="nav-link">Featured</a></li>
+        <li><a href="#locations" class="nav-link">Locations</a></li>
+        <li><a href="#explore" class="nav-link">Explore</a></li>
+        <li><a href="#map" class="nav-link">Map Search</a></li>
+        <li><a href="#reviews" class="nav-link">Reviews</a></li>
+        <li><a href="#how" class="nav-link">How It Works</a></li>
+        <li><a href="#faq" class="nav-link">FAQ</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <button class="btn btn-ghost" id="navLoginBtn" type="button">Sign In</button>
+        <button class="btn btn-primary" id="navRegisterBtn" type="button">List Your Property</button>
+        <div class="nav-user" id="navUser" hidden>
+          <span class="nav-user-name" id="navUserName"></span>
+          <button class="btn btn-ghost" id="navDashboardBtn" type="button">Dashboard</button>
+          <button class="btn btn-ghost" id="navLogoutBtn" type="button">Sign Out</button>
+        </div>
+        <button class="nav-toggle" id="navToggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </nav>
+  </header>
+
+  <main id="main">
+    <!-- ============ HERO ============ -->
+    <section class="hero" aria-labelledby="heroTitle">
+      <div class="container hero-grid">
+        <div class="hero-copy reveal">
+          <span class="eyebrow">Kenya's trusted rental platform</span>
+          <h1 id="heroTitle">Find a Home<br />That Feels <span class="accent">Right.</span></h1>
+          <p class="hero-sub">
+            Discover rental homes across Kenya, compare prices, explore property
+            ratings, and make more informed rental decisions.
+          </p>
+          <div class="hero-ctas">
+            <a href="#explore" class="btn btn-primary btn-lg">Explore Properties</a>
+            <button class="btn btn-outline btn-lg" id="heroListBtn" type="button">List Your Property</button>
+          </div>
+          <ul class="hero-stats" aria-label="Platform highlights">
+            <li><strong data-count="14">0</strong><span>Sample listings</span></li>
+            <li><strong>6</strong><span>Counties covered</span></li>
+            <li><strong>10</strong><span>Tenant reviews</span></li>
+          </ul>
+        </div>
+
+        <div class="hero-media reveal">
+          <div class="hero-photo">
+            <img
+              src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1000&q=80"
+              alt="Modern Kenyan family house with a green garden"
+              loading="eager"
+              onerror="nfImgFallback(this, 'Modern Kenyan rental home')"
+            />
+          </div>
+          <div class="hero-card-badge">
+            <span class="pulse-dot" aria-hidden="true"></span>
+            <div>
+              <strong>Verified tenant reviews</strong>
+              <small>Real ratings from real renters</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Search interface -->
+      <div class="container">
+        <form class="search-card reveal" id="searchForm" aria-label="Property search">
+          <div class="search-grid">
+            <div class="field">
+              <label for="searchLocation">Location</label>
+              <input type="search" id="searchLocation" placeholder="Estate, town or keyword" autocomplete="off" />
+            </div>
+            <div class="field">
+              <label for="searchCounty">County</label>
+              <select id="searchCounty">
+                <option value="">All counties</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="searchType">Property type</label>
+              <select id="searchType">
+                <option value="">Any type</option>
+                <option value="apartment">Apartment</option>
+                <option value="bedsitter">Bedsitter</option>
+                <option value="studio">Studio</option>
+                <option value="house">House</option>
+                <option value="maisonette">Maisonette</option>
+                <option value="duplex">Duplex</option>
+                <option value="townhouse">Townhouse</option>
+                <option value="bungalow">Bungalow</option>
+                <option value="condo">Condominium</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="searchBeds">Bedrooms</label>
+              <select id="searchBeds">
+                <option value="">Any</option>
+                <option value="0">Bedsitter / Studio</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="searchMaxRent">Max rent (KSh)</label>
+              <input type="number" id="searchMaxRent" min="0" step="500" placeholder="e.g. 20000" />
+            </div>
+            <div class="field field-action">
+              <button type="submit" class="btn btn-primary btn-lg btn-block">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                Search
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ============ FEATURED ============ -->
+    <section class="section" id="featured" aria-labelledby="featuredTitle">
+      <div class="container">
+        <div class="section-head reveal">
+          <div>
+            <span class="eyebrow">Hand-picked</span>
+            <h2 id="featuredTitle">Featured properties</h2>
+          </div>
+          <a href="#explore" class="link-more">View all properties
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>
+          </a>
+        </div>
+        <div class="property-grid" id="featuredGrid">
+          <!-- skeletons then cards -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ LOCATIONS ============ -->
+    <section class="section section-alt" id="locations" aria-labelledby="locationsTitle">
+      <div class="container">
+        <div class="section-head reveal">
+          <div>
+            <span class="eyebrow">Where to live</span>
+            <h2 id="locationsTitle">Popular locations in Kenya</h2>
+          </div>
+        </div>
+        <div class="location-grid" id="locationGrid">
+          <!-- populated by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ EXPLORE / SEARCH RESULTS ============ -->
+    <section class="section" id="explore" aria-labelledby="exploreTitle">
+      <div class="container">
+        <div class="section-head reveal">
+          <div>
+            <span class="eyebrow">Browse the market</span>
+            <h2 id="exploreTitle">Explore rentals</h2>
+          </div>
+          <p class="results-count" id="resultsCount" role="status" aria-live="polite"></p>
+        </div>
+
+        <div class="filter-bar reveal" role="search" aria-label="Filter properties">
+          <div class="filter-row">
+            <div class="field">
+              <label for="filterCounty">County</label>
+              <select id="filterCounty"><option value="">All counties</option></select>
+            </div>
+            <div class="field">
+              <label for="filterType">Type</label>
+              <select id="filterType">
+                <option value="">Any type</option>
+                <option value="apartment">Apartment</option>
+                <option value="bedsitter">Bedsitter</option>
+                <option value="studio">Studio</option>
+                <option value="house">House</option>
+                <option value="maisonette">Maisonette</option>
+                <option value="duplex">Duplex</option>
+                <option value="townhouse">Townhouse</option>
+                <option value="bungalow">Bungalow</option>
+                <option value="condo">Condominium</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="filterMinRent">Min rent</label>
+              <input type="number" id="filterMinRent" min="0" step="500" placeholder="0" />
+            </div>
+            <div class="field">
+              <label for="filterMaxRent">Max rent</label>
+              <input type="number" id="filterMaxRent" min="0" step="500" placeholder="Any" />
+            </div>
+            <div class="field">
+              <label for="filterBeds">Bedrooms</label>
+              <select id="filterBeds">
+                <option value="">Any</option>
+                <option value="0">Bedsitter / Studio</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="filterSort">Sort by</label>
+              <select id="filterSort">
+                <option value="newest">Newest</option>
+                <option value="price_asc">Rent: low to high</option>
+                <option value="price_desc">Rent: high to low</option>
+                <option value="rating">Top rated</option>
+              </select>
+            </div>
+            <div class="field field-check">
+              <label class="checkbox-label" for="filterAvailable">
+                <input type="checkbox" id="filterAvailable" /> Available now
+              </label>
+            </div>
+            <button class="btn btn-ghost" id="filterClear" type="button">Clear</button>
+          </div>
+        </div>
+
+        <div class="property-grid" id="exploreGrid" aria-live="polite"></div>
+
+        <nav class="pagination" id="explorePagination" aria-label="Pagination"></nav>
+      </div>
+    </section>
+
+    <!-- ============ MAP SEARCH ============ -->
+    <section class="section section-alt" id="map" aria-labelledby="mapTitle" data-view="map">
+      <div class="container">
+        <div class="section-head reveal">
+          <div>
+            <span class="eyebrow">Geo search</span>
+            <h2 id="mapTitle">Search on the map</h2>
+          </div>
+          <div class="map-view-toggle" role="group" aria-label="View mode">
+            <button class="view-btn active" id="viewMapBtn" type="button" aria-pressed="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg>
+              Map
+            </button>
+            <button class="view-btn" id="viewListBtn" type="button" aria-pressed="false">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1.3"/><circle cx="3.5" cy="12" r="1.3"/><circle cx="3.5" cy="18" r="1.3"/></svg>
+              List
+            </button>
+          </div>
+        </div>
+
+        <div class="filter-bar reveal" role="search" aria-label="Map filters">
+          <div class="filter-row map-filter-row">
+            <div class="field field-grow">
+              <label for="mapSearch">Location</label>
+              <div class="geo-search-wrap">
+                <svg class="geo-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+                <input type="text" id="mapSearch" placeholder="County, town or estate — e.g. Roysambu" autocomplete="off" maxlength="80" />
+                <div class="geo-dropdown" id="geoDropdown" hidden></div>
+              </div>
+            </div>
+            <div class="field">
+              <label for="mapCounty">County</label>
+              <select id="mapCounty"><option value="">All counties</option></select>
+            </div>
+            <div class="field">
+              <label for="mapType">Type</label>
+              <select id="mapType">
+                <option value="">Any type</option>
+                <option value="apartment">Apartment</option>
+                <option value="bedsitter">Bedsitter</option>
+                <option value="studio">Studio</option>
+                <option value="house">House</option>
+                <option value="maisonette">Maisonette</option>
+                <option value="duplex">Duplex</option>
+                <option value="townhouse">Townhouse</option>
+                <option value="bungalow">Bungalow</option>
+                <option value="condo">Condominium</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="mapMinRent">Min rent</label>
+              <input type="number" id="mapMinRent" min="0" step="500" placeholder="0" />
+            </div>
+            <div class="field">
+              <label for="mapMaxRent">Max rent</label>
+              <input type="number" id="mapMaxRent" min="0" step="500" placeholder="Any" />
+            </div>
+            <div class="field">
+              <label for="mapBeds">Bedrooms</label>
+              <select id="mapBeds">
+                <option value="">Any</option>
+                <option value="0">Bedsitter / Studio</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+              </select>
+            </div>
+            <div class="field field-check">
+              <label class="checkbox-label" for="mapAvailable">
+                <input type="checkbox" id="mapAvailable" /> Available now
+              </label>
+            </div>
+            <div class="field field-check">
+              <label class="checkbox-label" for="mapSaved">
+                <input type="checkbox" id="mapSaved" /> Saved only
+              </label>
+            </div>
+            <button class="btn btn-ghost" id="mapClear" type="button">Clear</button>
+          </div>
+        </div>
+
+        <div class="map-layout" id="mapLayout">
+          <!-- Results pane -->
+          <div class="map-results" id="mapResultsPane">
+            <div class="map-results-head">
+              <p class="results-count" id="mapResultsCount" role="status" aria-live="polite"></p>
+              <button class="btn btn-outline btn-sm map-mobile-map-btn" id="mapShowMapBtn" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg>
+                View map
+              </button>
+            </div>
+            <div class="property-grid map-grid" id="mapGrid" aria-live="polite"></div>
+            <nav class="pagination" id="mapPagination" aria-label="Map results pagination"></nav>
+          </div>
+
+          <!-- Map pane -->
+          <div class="map-pane" id="mapPane">
+            <div id="propertyMap" class="property-map" aria-label="Interactive property map"></div>
+
+            <div class="map-overlay" id="mapLoading" hidden>
+              <div class="map-loading-card">
+                <div class="map-spinner" aria-hidden="true"></div>
+                <span>Loading properties…</span>
+              </div>
+            </div>
+
+            <div class="map-toolbar">
+              <button class="map-tool-btn" id="mapFullscreenBtn" type="button" aria-label="Fullscreen map" title="Fullscreen map">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+              </button>
+            </div>
+
+            <div class="map-area-bar" id="mapAreaBar" hidden>
+              <span class="map-area-label" id="mapAreaLabel"></span>
+              <label class="map-auto-toggle">
+                <input type="checkbox" id="mapAutoSearch" /> Update as I move
+              </label>
+              <button class="btn btn-primary btn-sm" id="mapSearchAreaBtn" type="button">Search this area</button>
+            </div>
+
+            <div class="map-mobile-bar" id="mapMobileBar" hidden>
+              <span class="results-count" id="mapMobileCount"></span>
+              <button class="btn btn-primary btn-sm" id="mapShowListBtn" type="button">View list</button>
+            </div>
+
+            <div class="map-empty" id="mapEmpty" hidden>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg>
+              <p class="map-empty-title">No properties in this area</p>
+              <p>Try zooming out, moving the map, or clearing filters.</p>
+              <button class="btn btn-ghost btn-sm" id="mapEmptyClear" type="button">Clear filters</button>
+            </div>
+
+            <div class="map-unavailable" id="mapUnavailable" hidden>
+              <p class="map-empty-title">Map unavailable</p>
+              <p>Unable to load the map. Please refresh the page or try again later.</p>
+            </div>
+
+            <div class="map-tiles-notice" id="mapTilesNotice" hidden>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+              <div>
+                <p class="map-tiles-title">Map tiles failed to load</p>
+                <p>Your network is blocking OpenStreetMap tiles. The markers, search and listings below still work.</p>
+              </div>
+              <button class="btn btn-ghost btn-sm" id="mapTilesRetry" type="button">Retry</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ RECENT ============ -->
+    <section class="section section-alt" id="recent" aria-labelledby="recentTitle">
+      <div class="container">
+        <div class="section-head reveal">
+          <div>
+            <span class="eyebrow">Just listed</span>
+            <h2 id="recentTitle">Recently listed properties</h2>
+          </div>
+        </div>
+        <div class="property-grid" id="recentGrid"></div>
+      </div>
+    </section>
+
+    <!-- ============ HOW IT WORKS ============ -->
+    <section class="section" id="how" aria-labelledby="howTitle">
+      <div class="container">
+        <div class="section-head reveal">
+          <div>
+            <span class="eyebrow">Simple process</span>
+            <h2 id="howTitle">How NyumbaFind works</h2>
+          </div>
+        </div>
+        <ol class="steps-grid">
+          <li class="step-card reveal">
+            <span class="step-number">1</span>
+            <h3>Search &amp; filter</h3>
+            <p>Browse verified listings by county, estate, property type, bedrooms and rent range. Every price is in Kenyan Shillings.</p>
+          </li>
+          <li class="step-card reveal">
+            <span class="step-number">2</span>
+            <h3>Compare ratings</h3>
+            <p>Read tenant reviews covering condition, water, security, location, value for money and the landlord themselves.</p>
+          </li>
+          <li class="step-card reveal">
+            <span class="step-number">3</span>
+            <h3>Contact &amp; view</h3>
+            <p>Reach out to the landlord, book a viewing, and use our checklist to inspect the property before you sign.</p>
+          </li>
+          <li class="step-card reveal">
+            <span class="step-number">4</span>
+            <h3>Share your experience</h3>
+            <p>After moving in, leave a verified review to help the next tenant. Landlords can respond publicly.</p>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ============ REVIEWS ============ -->
+    <section class="section section-alt" id="reviews" aria-labelledby="reviewsTitle">
+      <div class="container">
+        <div class="section-head reveal">
+          <div>
+            <span class="eyebrow">Tenant voices</span>
+            <h2 id="reviewsTitle">What tenants say</h2>
+          </div>
+        </div>
+        <div class="reviews-layout">
+          <aside class="rating-summary-card reveal" aria-labelledby="summaryTitle">
+            <h3 id="summaryTitle">Platform rating</h3>
+            <div class="rating-big">
+              <span class="rating-big-number" id="globalAvg">–</span>
+              <div>
+                <div class="stars" id="globalStars" aria-hidden="true"></div>
+                <small id="globalCount"></small>
+              </div>
+            </div>
+            <div class="rating-bars" id="globalBars"></div>
+            <h4>Category averages</h4>
+            <div class="category-bars" id="globalCategories"></div>
+          </aside>
+          <div class="reviews-list" id="reviewsList"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ LANDLORD CTA ============ -->
+    <section class="section" id="landlord" aria-labelledby="landlordTitle">
+      <div class="container">
+        <div class="cta-panel reveal">
+          <div class="cta-copy">
+            <span class="eyebrow">For landlords</span>
+            <h2 id="landlordTitle">List your property in minutes</h2>
+            <p>Reach thousands of verified renters across Kenya. Add photos, set your rent in KSh, and manage listings from your dashboard.</p>
+            <ul class="cta-benefits">
+              <li>Free listing with up to 12 photos</li>
+              <li>Showcase tenant ratings on your property</li>
+              <li>Respond publicly to reviews</li>
+              <li>Track views and enquiries</li>
+            </ul>
+            <div class="cta-actions">
+              <button class="btn btn-primary btn-lg" id="ctaListBtn" type="button">List Your Property</button>
+              <button class="btn btn-outline btn-lg" id="ctaDashboardBtn" type="button">Open Dashboard</button>
+            </div>
+          </div>
+          <div class="cta-media">
+            <img src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=800&q=80"
+                 alt="Bright modern apartment interior" loading="lazy"
+                 onerror="nfImgFallback(this, 'Bright modern apartment interior')" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ TRUST & SAFETY ============ -->
+    <section class="section section-alt" id="trust" aria-labelledby="trustTitle">
+      <div class="container">
+        <div class="section-head reveal">
+          <div>
+            <span class="eyebrow">Trust &amp; safety</span>
+            <h2 id="trustTitle">Rent with confidence</h2>
+          </div>
+        </div>
+        <div class="trust-grid">
+          <article class="trust-card reveal">
+            <span class="trust-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 4 6v5c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V6z"/><path d="m9 12 2 2 4-4"/></svg></span>
+            <h3>Verified reviews</h3>
+            <p>Reviews are tied to real accounts and moderated by our team. Verified badges mark confirmed tenants.</p>
+          </article>
+          <article class="trust-card reveal">
+            <span class="trust-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4m0 4h.01"/></svg></span>
+            <h3>Community reporting</h3>
+            <p>Spot an inaccurate or suspicious review? Report it and our moderators will investigate.</p>
+          </article>
+          <article class="trust-card reveal">
+            <span class="trust-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>
+            <h3>Secure accounts</h3>
+            <p>Token-based authentication keeps your profile and data protected. Never pay deposits through the platform.</p>
+          </article>
+          <article class="trust-card reveal">
+            <span class="trust-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16v12H4z"/><path d="m4 7 8 6 8-6"/></svg></span>
+            <h3>Human support</h3>
+            <p>Our Nairobi-based support team reviews listings and helps resolve disputes between tenants and landlords.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ FAQ ============ -->
+    <section class="section" id="faq" aria-labelledby="faqTitle">
+      <div class="container faq-wrap">
+        <div class="section-head reveal">
+          <div>
+            <span class="eyebrow">Questions</span>
+            <h2 id="faqTitle">Frequently asked questions</h2>
+          </div>
+        </div>
+        <div class="faq-list" id="faqList">
+          <details class="faq-item reveal">
+            <summary>How are property ratings calculated?
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </summary>
+            <p>Each property shows the average of all approved tenant reviews. Tenants rate the overall stay plus six categories: condition, location, water reliability, security, value for money and the landlord. Listings with no reviews yet show "Not yet reviewed".</p>
+          </details>
+          <details class="faq-item reveal">
+            <summary>Can I trust the reviews?
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </summary>
+            <p>Reviews come from registered accounts, one review per tenant per property. Community reports move a review into moderation, and our team verifies or removes it. Look for the verified badge on reviews from confirmed tenants.</p>
+          </details>
+          <details class="faq-item reveal">
+            <summary>How do I list a property?
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </summary>
+            <p>Register a landlord account, open your dashboard and click "Add property". You can upload a main photo plus up to 11 more, set the rent in KSh, and describe amenities. You can edit or delete your listings at any time.</p>
+          </details>
+          <details class="faq-item reveal">
+            <summary>What should I check before renting?
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </summary>
+            <p>Run the taps to test water pressure, ask about power backup, check locks and lighting, confirm what the rent covers, and review the lease terms before paying. Ask the NyumbaFind AI assistant for the full checklist.</p>
+          </details>
+          <details class="faq-item reveal">
+            <summary>Are the sample listings real properties?
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </summary>
+            <p>No. Listings marked "Sample listing" are demonstration data created for development and testing. Genuine listings are created by registered landlords and carry no sample badge. Photographs on sample listings are licensed stock images used as placeholders.</p>
+          </details>
+          <details class="faq-item reveal">
+            <summary>Does NyumbaFind charge rent or take deposits?
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </summary>
+            <p>No. NyumbaFind is a discovery and reviews platform. All payments, deposits and lease agreements happen directly between you and the landlord — always get a written agreement and a receipt.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="site-footer" aria-labelledby="footerTitle">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <a href="/" class="brand">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 11.5 12 4l9 7.5v7a2 2 0 0 1-2 2h-4v-6h-6v6H5a2 2 0 0 1-2-2z"/></svg>
+          </span>
+          <span class="brand-text">Nyumba<em>Find</em></span>
+        </a>
+        <p>Kenya's rental discovery platform. Find homes, compare prices and read real tenant reviews across the counties.</p>
+        <h2 id="footerTitle" class="visually-hidden">Footer</h2>
+      </div>
+      <nav aria-label="Explore links">
+        <h3>Explore</h3>
+        <ul>
+          <li><a href="#featured">Featured properties</a></li>
+          <li><a href="#locations">Popular locations</a></li>
+          <li><a href="#explore">All rentals</a></li>
+          <li><a href="#reviews">Tenant reviews</a></li>
+        </ul>
+      </nav>
+      <nav aria-label="Company links">
+        <h3>Company</h3>
+        <ul>
+          <li><a href="#how">How it works</a></li>
+          <li><a href="#landlord">List your property</a></li>
+          <li><a href="#trust">Trust &amp; safety</a></li>
+          <li><a href="#faq">FAQ</a></li>
+        </ul>
+      </nav>
+      <div class="footer-contact">
+        <h3>Contact</h3>
+        <ul>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16v12H4z"/><path d="m4 7 8 6 8-6"/></svg>
+            <a href="mailto:support@nyumbafind.co.ke">support@nyumbafind.co.ke</a>
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+            <span>Westlands, Nairobi, Kenya</span>
+          </li>
+          <li>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg>
+            <span>+254 700 000 000</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <p>&copy; 2026 NyumbaFind. All rights reserved. Sample listings are demonstration data.</p>
+    </div>
+  </footer>
+
+  <!-- ============ PROPERTY DETAIL MODAL ============ -->
+  <div class="modal" id="propertyModal" role="dialog" aria-modal="true" aria-labelledby="pmTitle" hidden>
+    <div class="modal-backdrop" data-close="propertyModal"></div>
+    <div class="modal-panel modal-panel-lg">
+      <button class="modal-close" type="button" data-close="propertyModal" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+      <div id="propertyModalBody" class="modal-body"><!-- populated by JS --></div>
+    </div>
+  </div>
+
+  <!-- ============ AUTH MODAL ============ -->
+  <div class="modal" id="authModal" role="dialog" aria-modal="true" aria-labelledby="authTitle" hidden>
+    <div class="modal-backdrop" data-close="authModal"></div>
+    <div class="modal-panel">
+      <button class="modal-close" type="button" data-close="authModal" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+      <div class="auth-tabs" role="tablist">
+        <button class="auth-tab active" id="tabLogin" role="tab" aria-selected="true" type="button">Sign In</button>
+        <button class="auth-tab" id="tabRegister" role="tab" aria-selected="false" type="button">Register</button>
+      </div>
+      <div id="authBody">
+        <form id="loginForm" class="auth-form" novalidate>
+          <h2 id="authTitle" class="auth-heading">Welcome back</h2>
+          <div class="form-error" id="loginError" role="alert" hidden></div>
+          <div class="field">
+            <label for="loginUsername">Username or email</label>
+            <input type="text" id="loginUsername" required autocomplete="username" />
+          </div>
+          <div class="field">
+            <label for="loginPassword">Password</label>
+            <input type="password" id="loginPassword" required autocomplete="current-password" />
+          </div>
+          <button type="submit" class="btn btn-primary btn-block btn-lg" id="loginSubmit">Sign In</button>
+        </form>
+        <form id="registerForm" class="auth-form" novalidate hidden>
+          <h2 class="auth-heading">Create your account</h2>
+          <div class="form-error" id="registerError" role="alert" hidden></div>
+          <div class="field-row">
+            <div class="field">
+              <label for="regFirst">First name</label>
+              <input type="text" id="regFirst" autocomplete="given-name" />
+            </div>
+            <div class="field">
+              <label for="regLast">Last name</label>
+              <input type="text" id="regLast" autocomplete="family-name" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="regUsername">Username</label>
+            <input type="text" id="regUsername" required autocomplete="username" />
+          </div>
+          <div class="field">
+            <label for="regEmail">Email</label>
+            <input type="email" id="regEmail" required autocomplete="email" />
+          </div>
+          <div class="field">
+            <label for="regPassword">Password</label>
+            <input type="password" id="regPassword" required minlength="8" autocomplete="new-password" />
+            <small class="field-hint">At least 8 characters.</small>
+          </div>
+          <div class="field">
+            <label for="regRole">I am a…</label>
+            <select id="regRole">
+              <option value="tenant">Tenant looking for a home</option>
+              <option value="landlord">Landlord listing properties</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block btn-lg" id="registerSubmit">Create Account</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ LANDLORD DASHBOARD MODAL ============ -->
+  <div class="modal" id="dashboardModal" role="dialog" aria-modal="true" aria-labelledby="dashTitle" hidden>
+    <div class="modal-backdrop" data-close="dashboardModal"></div>
+    <div class="modal-panel modal-panel-lg">
+      <button class="modal-close" type="button" data-close="dashboardModal" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+      <div id="dashboardBody" class="modal-body"></div>
+    </div>
+  </div>
+
+  <!-- ============ M-PESA PAYMENT MODAL ============ -->
+  <div class="modal" id="paymentModal" role="dialog" aria-modal="true" aria-labelledby="payTitle" hidden>
+    <div class="modal-backdrop" data-close="paymentModal"></div>
+    <div class="modal-panel">
+      <button class="modal-close" type="button" data-close="paymentModal" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+
+      <!-- Step 1: details & confirmation -->
+      <div id="payStepDetails">
+        <div class="pay-brand">
+          <span class="pay-brand-icon" aria-hidden="true">M-PESA</span>
+          <h2 id="payTitle">Pay with M-Pesa</h2>
+        </div>
+        <div class="form-error" id="payError" role="alert" hidden></div>
+        <form id="payForm" novalidate>
+          <div class="pay-summary" id="paySummary"></div>
+          <div class="field">
+            <label for="payPhone">M-Pesa phone number</label>
+            <div class="phone-input">
+              <span class="phone-prefix">+254</span>
+              <input type="tel" id="payPhone" inputmode="tel" placeholder="712 345 678" maxlength="12" autocomplete="tel" />
+            </div>
+            <small class="field-hint">The phone registered with M-Pesa. You'll receive a PIN prompt on this phone.</small>
+          </div>
+          <div class="field">
+            <label for="payDescription">Description (optional)</label>
+            <input type="text" id="payDescription" maxlength="200" placeholder="e.g. Viewing booking for Roysambu apartment" />
+          </div>
+          <button type="submit" class="btn btn-accent btn-block btn-lg" id="paySubmit">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+            Confirm &amp; Send M-Pesa Prompt
+          </button>
+          <p class="pay-security-note">
+            NyumbaFind will never ask for your M-Pesa PIN. Enter your PIN only
+            on your own phone's M-Pesa prompt.
+          </p>
+        </form>
+      </div>
+
+      <!-- Step 2: processing -->
+      <div id="payStepProcessing" hidden>
+        <div class="pay-state">
+          <div class="pay-spinner" role="status" aria-label="Payment processing">
+            <span></span><span></span><span></span><span></span>
+          </div>
+          <h2>Check your phone</h2>
+          <p>We've sent an M-Pesa prompt to <strong id="payProcessingPhone"></strong>.
+          Enter your M-Pesa PIN privately on your phone to approve
+          <strong id="payProcessingAmount"></strong>.</p>
+          <p class="pay-wait">Waiting for confirmation…</p>
+          <button class="btn btn-ghost" id="payCancelWait" type="button">I haven't received the prompt</button>
+        </div>
+      </div>
+
+      <!-- Step 3: success -->
+      <div id="payStepSuccess" hidden>
+        <div class="pay-state">
+          <span class="pay-state-icon success" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m5 13 4 4L19 7"/></svg>
+          </span>
+          <h2>Payment successful</h2>
+          <div class="pay-receipt" id="payReceipt"></div>
+          <button class="btn btn-primary btn-block" id="payDone" type="button">Done</button>
+        </div>
+      </div>
+
+      <!-- Step 4: failure / pending / expired -->
+      <div id="payStepFailed" hidden>
+        <div class="pay-state">
+          <span class="pay-state-icon failed" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 6l12 12M18 6 6 18"/></svg>
+          </span>
+          <h2 id="payFailedTitle">Payment not completed</h2>
+          <p id="payFailedMessage"></p>
+          <div class="pay-receipt" id="payFailedReceipt"></div>
+          <div class="pay-actions">
+            <button class="btn btn-accent" id="payRetry" type="button">Try Again</button>
+            <button class="btn btn-ghost" id="payFailedDone" type="button">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ AI CHATBOX ============ -->
+  <button class="chat-fab" id="chatFab" type="button" aria-label="Open NyumbaFind AI assistant" aria-expanded="false" aria-controls="chatPanel">
+    <span class="chat-fab-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2c-1.5 0-3-.4-4.3-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2z"/><circle cx="8.5" cy="11.5" r="1.2"/><circle cx="12" cy="11.5" r="1.2"/><circle cx="15.5" cy="11.5" r="1.2"/><path d="M8 15.5h8v1H8z"/></svg>
+    </span>
+    <span class="chat-fab-label">NyumbaFind AI</span>
+  </button>
+
+  <section class="chat-panel" id="chatPanel" role="dialog" aria-modal="false" aria-labelledby="chatTitle" hidden>
+    <header class="chat-header">
+      <span class="chat-avatar" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2z"/></svg>
+      </span>
+      <div class="chat-title-wrap">
+        <h2 id="chatTitle">NyumbaFind AI</h2>
+        <span class="chat-status" id="chatStatus"><span class="status-dot"></span>Online</span>
+      </div>
+      <button class="chat-clear" id="chatClear" type="button" aria-label="Clear conversation">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13"/></svg>
+      </button>
+    </header>
+    <div class="chat-messages" id="chatMessages" aria-live="polite"></div>
+    <div class="chat-chips" id="chatChips">
+      <button type="button" class="chip">Find rentals under KSh 15,000</button>
+      <button type="button" class="chip">Show apartments in Nairobi</button>
+      <button type="button" class="chip">Help me compare two properties</button>
+      <button type="button" class="chip">What should I check before renting?</button>
+      <button type="button" class="chip">How do property reviews work?</button>
+    </div>
+    <form class="chat-input" id="chatForm">
+      <label class="visually-hidden" for="chatText">Message NyumbaFind AI</label>
+      <input type="text" id="chatText" placeholder="Describe the home you're looking for…" autocomplete="off" maxlength="500" />
+      <button type="submit" class="chat-send" id="chatSend" aria-label="Send message">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg>
+      </button>
+    </form>
+  </section>
+
+  <!-- ============ TOASTS ============ -->
+  <div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="false"></div>
+
+  <!-- Map libraries (self-hosted Leaflet + marker clustering, no API key) -->
+  <script>
+    // Server-side map configuration (tile provider + any
+    // API key). Kept out of the committed JS so secrets
+    // and provider URLs can be changed via environment
+    // variables only.
+    window.NYUMBAFIND_MAP_CONFIG = {
+      tileUrl: "{{ map_tile_url|escapejs }}",
+      attribution: "{{ map_tile_attribution|escapejs }}",
+      apiKey: "{{ map_tile_api_key|escapejs }}",
+    };
+  </script>
+  <script src="/static/vendor/leaflet/leaflet.js"></script>
+  <script src="/static/vendor/leaflet.markercluster/leaflet.markercluster.js"></script>
+  <script src="/static/script.js"></script>
+</body>
+</html>
