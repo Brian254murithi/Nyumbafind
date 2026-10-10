@@ -32,6 +32,13 @@ ALLOWED_HOSTS = [
     if host.strip()
 ]
 
+# Vercel sets VERCEL=1 at runtime. Allow all *.vercel.app
+# hosts automatically so a missing DJANGO_ALLOWED_HOSTS
+# never bricks a deployment. Custom domains still need to
+# be listed via DJANGO_ALLOWED_HOSTS.
+if os.getenv("VERCEL", "").strip() == "1" and ".vercel.app" not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(".vercel.app")
+
 # Platforms like Vercel terminate TLS and forward the original
 # protocol/host via X-Forwarded-* headers. Trust them (only when
 # explicitly enabled — Vercel sets VERCEL=1 at runtime) so Django
