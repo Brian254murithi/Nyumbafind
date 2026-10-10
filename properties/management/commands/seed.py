@@ -143,6 +143,14 @@ class Command(BaseCommand):
                 },
             )
 
+        # Demo passwords — get_or_create never touches the
+        # password of an existing row, so set it explicitly
+        # to keep the demo accounts login-able after re-runs
+        # (including `seed --reset`). Demo/dev use only.
+        for user in [*landlords.values(), *tenants.values()]:
+            user.set_password("demo1234")
+            user.save(update_fields=["password"])
+
         listings = [
             {
                 "owner": "sunrise_homes",
