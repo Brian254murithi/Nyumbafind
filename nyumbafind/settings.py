@@ -32,6 +32,17 @@ ALLOWED_HOSTS = [
     if host.strip()
 ]
 
+# Platforms like Vercel terminate TLS and forward the original
+# protocol/host via X-Forwarded-* headers. Trust them (only when
+# explicitly enabled — Vercel sets VERCEL=1 at runtime) so Django
+# treats requests as HTTPS, builds correct absolute URLs, and the
+# CSRF referer check accepts secure origins.
+if os.getenv("VERCEL", "").strip() == "1" or os.getenv(
+    "DJANGO_SECURE_PROXY", ""
+).strip().lower() in ("1", "true", "yes"):
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    USE_X_FORWARDED_HOST = True
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -55,6 +66,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -164,9 +176,22 @@ CORS_ALLOWED_ORIGINS = [
 ]
 CORS_ALLOW_CREDENTIALS = False
 
+# Origins trusted by CSRF protection for cross-origin unsafe
+# requests (POST etc.). Must include the scheme, e.g.
+# "https://nyumbafind-eight.vercel.app". Same-origin requests
+# are covered automatically; set this via DJANGO_CSRF_TRUSTED_ORIGINS.
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv("DJANGO_CSRF_TRUSTED_ORIGINS", "").split(",")
+    if origin.strip()
+]
+
 # ---------------------------------------------------------------------------
 # Static files & media uploads
 # ---------------------------------------------------------------------------
+# WhiteNoise serves /static/ from STATIC_ROOT in production.
+# Run `python manage.py collectstatic --noinput` during the
+# build step on Vercel (or any PaaS) so the files are collected.
 STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "frontend"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
