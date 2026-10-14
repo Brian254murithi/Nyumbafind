@@ -9,11 +9,28 @@ class FrontendView(TemplateView):
     """Single-page frontend shell.
 
     Sends no-cache headers so browsers never serve a stale
-    copy of the HTML. Static assets (CSS/JS) are
-    fingerprinted by their URLs and keep normal caching.
+    copy of the HTML. Static assets (CSS/JS) get a
+    content version query string so a stale browser cache
+    cannot keep an old build alive after a change.
     """
 
     template_name = "index.html"
+
+    @staticmethod
+    def asset_version():
+        """Short token derived from the newest asset mtime."""
+        latest = 0
+        for name in ("style.css", "script.js"):
+            try:
+                latest = max(latest, int((settings.BASE_DIR / "frontend" / name).stat().st_mtime))
+            except OSError:
+                continue
+        return latest or 1
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["asset_version"] = self.asset_version()
+        return context
 
     def dispatch(self, request, *args, **kwargs):
         response = super().dispatch(request, *args, **kwargs)

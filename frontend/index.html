@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/static/style.css" />
+  <link rel="stylesheet" href="/static/style.css?v={{ asset_version }}" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='6' fill='%230F2B5B'/><path d='M6 12l6-5 6 5v6h-4v-4h-4v4H6z' fill='%23E63946'/></svg>" />
 </head>
 <body>
@@ -709,6 +709,6 @@
   <!-- ============ TOASTS ============ -->
   <div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="false"></div>
 
-  <script src="/static/script.js"></script>
+  <script src="/static/script.js?v={{ asset_version }}"></script>
 </body>
 </html>
