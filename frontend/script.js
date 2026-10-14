@@ -892,12 +892,17 @@ function updateAuthUI() {
 async function loadMe() {
   const token = getToken();
   if (!token) { updateAuthUI(); return; }
-  const { ok, data } = await api("/api/auth/me/");
-  if (ok && data) {
-    localStorage.setItem(USER_KEY, JSON.stringify(data.user));
-  } else {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
+  try {
+    const { ok, data } = await api("/api/auth/me/");
+    if (ok && data) {
+      localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+    } else {
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(USER_KEY);
+    }
+  } catch {
+    // Server unreachable — keep the stored session so a
+    // temporary network issue doesn't sign the user out.
   }
   updateAuthUI();
 }
@@ -984,7 +989,12 @@ function initAuth() {
 async function logout() {
   const token = getToken();
   if (token) {
-    await api("/api/auth/logout/", { method: "POST" }); // best-effort server-side invalidation
+    try {
+      await api("/api/auth/logout/", { method: "POST" }); // best-effort server-side invalidation
+    } catch {
+      // Server unreachable — sign out locally anyway so
+      // the UI never keeps showing the signed-in state.
+    }
   }
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
