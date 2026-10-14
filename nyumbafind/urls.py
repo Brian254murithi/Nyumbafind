@@ -9,24 +9,11 @@ class FrontendView(TemplateView):
     """Single-page frontend shell.
 
     Sends no-cache headers so browsers never serve a stale
-    copy of the HTML (e.g. an older version whose map
-    libraries pointed at a CDN that no longer resolves).
-    Static assets (CSS/JS) are fingerprinted by their URLs
-    and keep normal caching.
-
-    Also injects the server-side map tile configuration so
-    the tile provider (and any API key) can be changed via
-    environment variables without touching the frontend.
+    copy of the HTML. Static assets (CSS/JS) are
+    fingerprinted by their URLs and keep normal caching.
     """
 
     template_name = "index.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["map_tile_url"] = settings.MAP_TILE_URL
-        context["map_tile_attribution"] = settings.MAP_TILE_ATTRIBUTION
-        context["map_tile_api_key"] = settings.MAP_TILE_API_KEY
-        return context
 
     def dispatch(self, request, *args, **kwargs):
         response = super().dispatch(request, *args, **kwargs)

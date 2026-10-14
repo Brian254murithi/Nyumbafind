@@ -66,12 +66,8 @@ NyumbaFind/
 │
 └── frontend/                     # Vanilla JS frontend (served by Django)
     ├── index.html                # Single-page app shell + M-Pesa payment modal
-    │                             #   + interactive map search (Leaflet)
-    ├── style.css                 # Design system (~1,070 lines)
-    ├── script.js                 # Application logic (~2,390 lines)
-    └── vendor/                 # Self-hosted Leaflet 1.9.4 +
-        ├── leaflet/                #   markercluster 1.5.3 (no CDN,
-        └── leaflet.markercluster/  #   no API key)
+    ├── style.css                 # Design system
+    └── script.js                 # Application logic
 ```
 
 ---
@@ -129,9 +125,6 @@ Copy `.env.example` to `.env` and adjust. All secrets stay server-side.
 | `OPENAI_BASE_URL` | `https://api.openai.com/v1` | Any OpenAI-compatible endpoint |
 | `OPENAI_MODEL` | `gpt-4o-mini` | Model name |
 | `AI_RATE_LIMIT` | `10/min` | Chat endpoint throttle |
-| `MAP_TILE_URL` | *(empty = OpenStreetMap)* | Primary map tile URL with `{z}/{x}/{y}` (any Leaflet-compatible provider) |
-| `MAP_TILE_ATTRIBUTION` | *(empty = built-in)* | Attribution HTML for the primary tile provider |
-| `MAP_TILE_API_KEY` | *(empty)* | API key for the primary tile provider (injected server-side, never committed) |
 | `DJANGO_SECURE` | *(empty)* | Set `true` to enable HSTS/SSL-redirect/cookie flags |
 | `MPESA_ENVIRONMENT` | `sandbox` | `sandbox` or `production` |
 | `MPESA_CONSUMER_KEY` | *(empty)* | Daraja app consumer key |
@@ -164,17 +157,17 @@ send the header `Authorization: Token <token>` for protected endpoints.
 ### Properties
 | Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/api/properties/` | List & filter. Params: `county`, `town`, `estate`, `property_type`, `min_rent`, `max_rent`, `bedrooms`, `available`, `featured`, `q`, `sort` (`newest`,`price_asc`,`price_desc`,`rating`), `page`, `page_size`. **Geo:** `latitude`+`longitude`+`radius` (km, default 10, max 200) for distance search; `min_lat`, `max_lat`, `min_lng`, `max_lng` for bounding-box search; `has_coords=true` for mappable listings only. All coordinates are validated server-side (−90…90 / −180…180). |
+| `GET` | `/api/properties/` | List & filter. Params: `county`, `town`, `estate`, `property_type`, `min_rent`, `max_rent`, `bedrooms`, `available`, `featured`, `q`, `sort` (`newest`,`price_asc`,`price_desc`,`rating`), `page`, `page_size`. **Geo:** `latitude`+`longitude`+`radius` (km, default 10, max 200) for distance search; `min_lat`, `max_lat`, `min_lng`, `max_lng` for bounding-box search; `has_coords=true` for listings with coordinates only. All coordinates are validated server-side (−90…90 / −180…180). |
 | `POST` | `/api/properties/` | Create a listing (landlord/admin only, multipart for images). |
 | `GET` | `/api/properties/{id}/` | Public property detail incl. rating summary + gallery. |
 | `PATCH` / `PUT` | `/api/properties/{id}/` | Update (owner or admin only). |
 | `DELETE` | `/api/properties/{id}/` | Delete (owner or admin only). |
 | `POST` | `/api/properties/{id}/images/` | Upload extra photos (owner/admin only, max 12 total). |
 
-### Locations (map search)
+### Locations
 | Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/api/locations/search/` | Autocomplete for the map search bar. `?q=` (min 2 chars) matches real counties, towns and estates from the database with listing counts and representative coordinates (property centroid, or a known county centroid for map centring). `?all=1` lists every county with listings. |
+| `GET` | `/api/locations/search/` | Location autocomplete. `?q=` (min 2 chars) matches real counties, towns and estates from the database with listing counts and representative coordinates (property centroid, or a known county centroid). `?all=1` lists every county with listings. |
 
 ### Reviews
 | Method | Endpoint | Description |
@@ -260,49 +253,25 @@ return it from `get_provider()`.
 
 ---
 
-## 6. Interactive map search
+## 6. Geographic search
 
-The **Map Search** section (nav → *Map Search*, or `#map`) lets tenants
-explore listings geographically. It is built with **Leaflet.js +
-OpenStreetMap** and **Leaflet.markercluster** — both **self-hosted**
-under `frontend/vendor/` (**no API key required**, no external
-JavaScript dependency).
+Listings carry optional `latitude` / `longitude` coordinates
+(`DecimalField(9, 6)`, nullable). The properties API supports
+distance and bounding-box search on top of them:
 
-**Tile providers:** the map engine, markers, search and listings
-never depend on a single tile provider. The primary provider is
-OpenStreetMap; on sustained tile failures the map **automatically
-switches to CARTO** without reloading the page. The primary
-provider is configurable via environment variables — `MAP_TILE_URL`
-(any Leaflet-compatible URL with `{z}/{x}/{y}`),
-`MAP_TILE_ATTRIBUTION`, and `MAP_TILE_API_KEY` (injected
-server-side, never committed to the frontend).
+- `latitude` + `longitude` + `radius` (km, default 10, max 200) —
+  distance search
+- `min_lat` / `max_lat` / `min_lng` / `max_lng` — bounding-box search
+- `has_coords=true` — only listings with coordinates
 
-### Features
-- Split-screen layout on desktop (results list left, interactive map
-  right); stacked with a Map/List toggle on mobile and tablet.
-- Modern **price markers** (`KSh 12K` style) generated from the live
-  database — with hover, selected and saved (♥) states.
-- **Marker clustering** that expands as you zoom in, essential for
-  dense areas like Nairobi.
-- Click a marker for a **popup preview** (photo, type, rent, location,
-  bedrooms, rating, availability) with *View Property* and *Save*
-  buttons.
-- **Location autocomplete** (county / town / estate) backed by real
-  listing data from `/api/locations/search/`.
-- **Search this area**: pan or zoom the map, then search the visible
-  bounding box (or enable *Update as I move*).
-- Filters (county, type, rent range, bedrooms, availability, saved-only),
-  fullscreen map mode, loading and empty states.
-- Saved properties are kept in the browser (`localStorage`) — the heart
-  state appears on markers and in popups.
+All coordinates are validated server-side (−90…90 / −180…180).
 
 ### Data model
 `Property.latitude` / `Property.longitude` (`DecimalField(9, 6)`,
-nullable). Listings without coordinates still appear in the normal list
-view but never produce map markers. The seed command
-(`python manage.py seed`) geocodes all 14 sample listings across
-Nairobi, Kiambu, Mombasa and Nakuru, and backfills coordinates when
-re-run against an older database.
+nullable). Listings without coordinates still appear in the normal
+list view. The seed command (`python manage.py seed`) geocodes all
+14 sample listings across Nairobi, Kiambu, Mombasa and Nakuru, and
+backfills coordinates when re-run against an older database.
 
 ### How the geography works
 No PostGIS dependency — `properties/geo.py` implements a pure-Python
@@ -310,8 +279,8 @@ haversine and a bounding-box pre-filter that runs in SQL, so the same
 code works on SQLite (dev) and PostgreSQL (production). Distance search
 uses a generous SQL bounding box, then refines precisely in Python.
 
-County centroids (public geographic facts) are used **only to centre
-the map** when a county has no geocoded listings yet; property data
+County centroids (public geographic facts) are used as representative
+coordinates when a county has no geocoded listings yet; property data
 itself always comes from the database.
 
 ---
@@ -510,13 +479,6 @@ review list).
   on the unique `CheckoutRequestID`, server-side amount validation and
   idempotent processing; restrict the callback URL to Safaricom IP ranges
   at the infrastructure level in production.
-- **Map search:** map *tiles* stream from OpenStreetMap (free, subject
-  to their usage policy — self-host tiles for very high-traffic
-  deployments), with automatic CARTO fallback. The Leaflet library
-  itself is bundled locally, so the map interface loads even when
-  third-party CDNs are unreachable. The primary tile provider is
-  configurable via `MAP_TILE_URL`/`MAP_TILE_API_KEY` environment
-  variables.
 - **Image hosting:** uploaded photos are stored on the local filesystem
   (`media/`); configure S3/Cloud storage for multi-server deployments.
 - **Rule-based AI:** without an API key the assistant handles structured rental

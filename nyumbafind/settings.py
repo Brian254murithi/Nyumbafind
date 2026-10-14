@@ -234,19 +234,6 @@ MPESA_INITIATOR = os.getenv("MPESA_INITIATOR", "").strip()
 MPESA_SECURITY_CREDENTIAL = os.getenv("MPESA_SECURITY_CREDENTIAL", "").strip()
 
 # ---------------------------------------------------------------------------
-# Map tile provider (optional overrides for the property map)
-# ---------------------------------------------------------------------------
-# Leave MAP_TILE_URL empty to use the built-in providers
-# (OpenStreetMap primary, CARTO automatic fallback).
-# Override the primary with any Leaflet-compatible URL
-# containing {z}/{x}/{y} (and {s} for subdomains).
-# If the provider requires an API key, set it here — it is
-# injected server-side and never committed to the codebase.
-MAP_TILE_URL = os.getenv("MAP_TILE_URL", "").strip()
-MAP_TILE_ATTRIBUTION = os.getenv("MAP_TILE_ATTRIBUTION", "").strip()
-MAP_TILE_API_KEY = os.getenv("MAP_TILE_API_KEY", "").strip()
-
-# ---------------------------------------------------------------------------
 # Internationalisation & security defaults
 # ---------------------------------------------------------------------------
 LANGUAGE_CODE = "en-us"

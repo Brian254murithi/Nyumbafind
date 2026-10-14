@@ -8,10 +8,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <!-- Map (Leaflet + OpenStreetMap — self-hosted, no API key required) -->
-  <link rel="stylesheet" href="/static/vendor/leaflet/leaflet.css" />
-  <link rel="stylesheet" href="/static/vendor/leaflet.markercluster/MarkerCluster.css" />
-  <link rel="stylesheet" href="/static/vendor/leaflet.markercluster/MarkerCluster.Default.css" />
   <link rel="stylesheet" href="/static/style.css" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='6' fill='%230F2B5B'/><path d='M6 12l6-5 6 5v6h-4v-4h-4v4H6z' fill='%23E63946'/></svg>" />
 </head>
@@ -32,7 +28,6 @@
         <li><a href="#featured" class="nav-link">Featured</a></li>
         <li><a href="#locations" class="nav-link">Locations</a></li>
         <li><a href="#explore" class="nav-link">Explore</a></li>
-        <li><a href="#map" class="nav-link">Map Search</a></li>
         <li><a href="#reviews" class="nav-link">Reviews</a></li>
         <li><a href="#how" class="nav-link">How It Works</a></li>
         <li><a href="#faq" class="nav-link">FAQ</a></li>
@@ -254,157 +249,6 @@
         <div class="property-grid" id="exploreGrid" aria-live="polite"></div>
 
         <nav class="pagination" id="explorePagination" aria-label="Pagination"></nav>
-      </div>
-    </section>
-
-    <!-- ============ MAP SEARCH ============ -->
-    <section class="section section-alt" id="map" aria-labelledby="mapTitle" data-view="map">
-      <div class="container">
-        <div class="section-head reveal">
-          <div>
-            <span class="eyebrow">Geo search</span>
-            <h2 id="mapTitle">Search on the map</h2>
-          </div>
-          <div class="map-view-toggle" role="group" aria-label="View mode">
-            <button class="view-btn active" id="viewMapBtn" type="button" aria-pressed="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg>
-              Map
-            </button>
-            <button class="view-btn" id="viewListBtn" type="button" aria-pressed="false">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1.3"/><circle cx="3.5" cy="12" r="1.3"/><circle cx="3.5" cy="18" r="1.3"/></svg>
-              List
-            </button>
-          </div>
-        </div>
-
-        <div class="filter-bar reveal" role="search" aria-label="Map filters">
-          <div class="filter-row map-filter-row">
-            <div class="field field-grow">
-              <label for="mapSearch">Location</label>
-              <div class="geo-search-wrap">
-                <svg class="geo-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 21s7-5.5 7-11a7 7 0 1 0-14 0c0 5.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
-                <input type="text" id="mapSearch" placeholder="County, town or estate — e.g. Roysambu" autocomplete="off" maxlength="80" />
-                <div class="geo-dropdown" id="geoDropdown" hidden></div>
-              </div>
-            </div>
-            <div class="field">
-              <label for="mapCounty">County</label>
-              <select id="mapCounty"><option value="">All counties</option></select>
-            </div>
-            <div class="field">
-              <label for="mapType">Type</label>
-              <select id="mapType">
-                <option value="">Any type</option>
-                <option value="apartment">Apartment</option>
-                <option value="bedsitter">Bedsitter</option>
-                <option value="studio">Studio</option>
-                <option value="house">House</option>
-                <option value="maisonette">Maisonette</option>
-                <option value="duplex">Duplex</option>
-                <option value="townhouse">Townhouse</option>
-                <option value="bungalow">Bungalow</option>
-                <option value="condo">Condominium</option>
-              </select>
-            </div>
-            <div class="field">
-              <label for="mapMinRent">Min rent</label>
-              <input type="number" id="mapMinRent" min="0" step="500" placeholder="0" />
-            </div>
-            <div class="field">
-              <label for="mapMaxRent">Max rent</label>
-              <input type="number" id="mapMaxRent" min="0" step="500" placeholder="Any" />
-            </div>
-            <div class="field">
-              <label for="mapBeds">Bedrooms</label>
-              <select id="mapBeds">
-                <option value="">Any</option>
-                <option value="0">Bedsitter / Studio</option>
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-              </select>
-            </div>
-            <div class="field field-check">
-              <label class="checkbox-label" for="mapAvailable">
-                <input type="checkbox" id="mapAvailable" /> Available now
-              </label>
-            </div>
-            <div class="field field-check">
-              <label class="checkbox-label" for="mapSaved">
-                <input type="checkbox" id="mapSaved" /> Saved only
-              </label>
-            </div>
-            <button class="btn btn-ghost" id="mapClear" type="button">Clear</button>
-          </div>
-        </div>
-
-        <div class="map-layout" id="mapLayout">
-          <!-- Results pane -->
-          <div class="map-results" id="mapResultsPane">
-            <div class="map-results-head">
-              <p class="results-count" id="mapResultsCount" role="status" aria-live="polite"></p>
-              <button class="btn btn-outline btn-sm map-mobile-map-btn" id="mapShowMapBtn" type="button">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg>
-                View map
-              </button>
-            </div>
-            <div class="property-grid map-grid" id="mapGrid" aria-live="polite"></div>
-            <nav class="pagination" id="mapPagination" aria-label="Map results pagination"></nav>
-          </div>
-
-          <!-- Map pane -->
-          <div class="map-pane" id="mapPane">
-            <div id="propertyMap" class="property-map" aria-label="Interactive property map"></div>
-
-            <div class="map-overlay" id="mapLoading" hidden>
-              <div class="map-loading-card">
-                <div class="map-spinner" aria-hidden="true"></div>
-                <span>Loading properties…</span>
-              </div>
-            </div>
-
-            <div class="map-toolbar">
-              <button class="map-tool-btn" id="mapFullscreenBtn" type="button" aria-label="Fullscreen map" title="Fullscreen map">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
-              </button>
-            </div>
-
-            <div class="map-area-bar" id="mapAreaBar" hidden>
-              <span class="map-area-label" id="mapAreaLabel"></span>
-              <label class="map-auto-toggle">
-                <input type="checkbox" id="mapAutoSearch" /> Update as I move
-              </label>
-              <button class="btn btn-primary btn-sm" id="mapSearchAreaBtn" type="button">Search this area</button>
-            </div>
-
-            <div class="map-mobile-bar" id="mapMobileBar" hidden>
-              <span class="results-count" id="mapMobileCount"></span>
-              <button class="btn btn-primary btn-sm" id="mapShowListBtn" type="button">View list</button>
-            </div>
-
-            <div class="map-empty" id="mapEmpty" hidden>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2z"/><path d="M9 4v14M15 6v14"/></svg>
-              <p class="map-empty-title">No properties in this area</p>
-              <p>Try zooming out, moving the map, or clearing filters.</p>
-              <button class="btn btn-ghost btn-sm" id="mapEmptyClear" type="button">Clear filters</button>
-            </div>
-
-            <div class="map-unavailable" id="mapUnavailable" hidden>
-              <p class="map-empty-title">Map unavailable</p>
-              <p>Unable to load the map. Please refresh the page or try again later.</p>
-            </div>
-
-            <div class="map-tiles-notice" id="mapTilesNotice" hidden>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
-              <div>
-                <p class="map-tiles-title">Map tiles failed to load</p>
-                <p>Your network is blocking OpenStreetMap tiles. The markers, search and listings below still work.</p>
-              </div>
-              <button class="btn btn-ghost btn-sm" id="mapTilesRetry" type="button">Retry</button>
-            </div>
-          </div>
-        </div>
       </div>
     </section>
 
@@ -862,20 +706,6 @@
   <!-- ============ TOASTS ============ -->
   <div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="false"></div>
 
-  <!-- Map libraries (self-hosted Leaflet + marker clustering, no API key) -->
-  <script>
-    // Server-side map configuration (tile provider + any
-    // API key). Kept out of the committed JS so secrets
-    // and provider URLs can be changed via environment
-    // variables only.
-    window.NYUMBAFIND_MAP_CONFIG = {
-      tileUrl: "{{ map_tile_url|escapejs }}",
-      attribution: "{{ map_tile_attribution|escapejs }}",
-      apiKey: "{{ map_tile_api_key|escapejs }}",
-    };
-  </script>
-  <script src="/static/vendor/leaflet/leaflet.js"></script>
-  <script src="/static/vendor/leaflet.markercluster/leaflet.markercluster.js"></script>
   <script src="/static/script.js"></script>
 </body>
 </html>
