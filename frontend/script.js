@@ -1396,6 +1396,7 @@ function initChat() {
       "Conversation cleared. How can I help you find a home today?"
     );
   });
+  $("#chatClose").addEventListener("click", () => toggleChat(false));
   $$("#chatChips .chip").forEach((chip) => {
     chip.addEventListener("click", () => sendChatMessage(chip.textContent));
   });
